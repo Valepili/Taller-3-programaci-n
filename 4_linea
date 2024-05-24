@@ -1,0 +1,130 @@
+#include <iostream>
+#include <vector>
+
+using namespace std; 
+
+const int ROWS = 6;
+const int COLS = 7;
+
+class Connect4 {
+public:
+    Connect4() : board(ROWS, vector<char>(COLS, '.')) {}
+
+    void playGame() {
+        int turn = 0;
+        bool win = false;
+
+        while (true) {
+            printBoard();
+            int col;
+            if (turn % 2 == 0) {
+                cout << "Jugador 1 (X), escoje un número entre el 0 y el 6: ";
+            } else {
+                cout << "Jugador 2 (0), escoje un número entre el 0 y el 6:";
+            }
+            cin >> col;
+
+            if (col < 0 || col >= COLS || board[0][col] != '.') {
+                cout << "Invalid move. Try again.\n";
+                continue;
+            }
+
+            int row = dropPiece(col, (turn % 2 == 0) ? 'X' : 'O');
+            win = checkWin(row, col);
+
+            if (win) {
+                printBoard();
+                if (turn % 2 == 0) {
+                    cout << "Jugador 1 (X) wins!\n";
+                } else {
+                    cout << "Jugador 2 (O) wins!\n";
+                }
+                break;
+            }
+
+            turn++;
+            if (turn == ROWS * COLS) {
+                printBoard();
+                cout << "The game is a draw.\n";
+                break;
+            }
+        }
+    }
+
+private:
+    vector<vector<char>> board;
+
+    void printBoard() {
+        for (const auto& row : board) {
+            for (char cell : row) {
+                cout << cell << ' ';
+            }
+            cout << '\n';
+        }
+    }
+
+    int dropPiece(int col, char piece) {
+        for (int row = ROWS - 1; row >= 0; --row) {
+            if (board[row][col] == '.') {
+                board[row][col] = piece;
+                return row;
+            }
+        }
+        return -1; // This should never happen
+    }
+
+    bool checkWin(int row, int col) {
+        char piece = board[row][col];
+        return checkDirection(row, col, 1, 0, piece) >= 4; 
+                checkDirection(row, col, 0, 1, piece) >= 4; 
+                checkDirection(row, col, 1, 1, piece) >= 4; 
+                checkDirection(row, col, 1, -1, piece) >= 4; 
+                
+    }
+
+    int checkDirection(int row, int col, int dRow, int dCol, char piece) {
+        int count = 0;
+        for (int i = -3; i <= 3; ++i) {
+            int r = row + i * dRow;
+            int c = col + i * dCol;
+            if (r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] == piece) {
+                count++;
+                if (count >= 4) return count;
+            } else {
+                count = 0;
+            }
+        }
+        return count;
+    }
+
+    bool checkLShape(int row, int col, char piece) {
+        // Check for L shapes around the piece at (row, col)
+        int LShapes[4][3][2] = {
+            {{0, 0}, {1, 0}, {1, 1}}, // L Shape facing bottom right
+            {{0, 0}, {0, 1}, {1, 1}}, // L Shape facing bottom left
+            {{0, 0}, {0, 1}, {-1, 1}}, // L Shape facing top left
+            {{0, 0}, {1, 0}, {1, -1}} // L Shape facing bottom right (flipped)
+        };
+
+        for (const auto& shape : LShapes) {
+            bool valid = true;
+            for (const auto& cell : shape) {
+                int r = row + cell[0];
+                int c = col + cell[1];
+                if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] != piece) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) return true;
+        }
+
+        return false;
+    }
+};
+
+int main() {
+    Connect4 game;
+    game.playGame();
+    return 0;
+}
